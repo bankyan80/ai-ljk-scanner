@@ -1,0 +1,6 @@
+{
+  "name": "AI LJK Scanner",
+  "description": "Sistem Scan, Deteksi, Koreksi, dan Penilaian Lembar Jawaban Otomatis berbasis Computer Vision dan AI",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

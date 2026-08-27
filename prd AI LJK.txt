@@ -1,0 +1,60 @@
+Berikut adalah penjelasan detail mengenai arsitektur visual dan tata letak antarmuka aplikasi AI LJK Scanner & Corrector Pro:
+1. Tema & Karakter Visual (Aesthetic & Atmosphere)
+Palet Warna: Mengusung tema Modern Slate Dark (latar #020617 dan #0f172a) dengan aksen neon berpresisi tinggi seperti Cyan Neon (indikator scanner & OMR), Emerald Green (status benar/akurat), Rose Red (salah/arsiran ganda), dan Amber Yellow (butir kosong/peringatan).
+Tipografi: Menggunakan kombinasi font Plus Jakarta Sans untuk navigasi yang mudah dibaca dan JetBrains Mono untuk nomor butir, skor, dan koordinat digital agar menyerupai instrumen pemindai profesional.
+2. Struktur Tata Letak Aplikasi (Dari Atas ke Bawah)
+code
+Code
++-----------------------------------------------------------------------------------+
+|  [Logo & Judul AI Scanner]         [Kunci Jawaban] [Batch] [Cetak] [Riwayat] [Upload] |  <-- Header
++-----------------------------------------------------------------------------------+
+|               [1. Upload/Kamera] -> [2. Deteksi Grid] -> [3. Penilaian Selesai]    |  <-- Stepper
++-----------------------------------------------------------------------------------+
+|  KIRI (Lembar Digital LJK Interaktif)     |  KANAN (Panel Analisis & Diagnostik)  |
+|  - Bidik 4 Titik Sudut Hitam              |  - Status Koreksi Sudut (Perspective) |
+|  - Simulasi Arsiran Pensil 2B Asli        |  - Laser Scanner Realtime Progress   |
+|  - Cincin Hijau/Merah Bounding Box        |  - Data Siswa & KKM Ujian             |
+|  - Tombol Pilihan Contoh (SMP/Hybrid/SD)  |  - Kartu Metrik Ringkas               |
++-----------------------------------------------------------------------------------+
+|  BAWAH (Hasil Scan & Tabel Interaktif)                                            |
+|  - 6 Kartu KPI: Nilai Akhir (Lingkaran), Jumlah Soal, Benar, Salah, Kosong, Waktu |
+|  - Tab Navigasi: Bagian A (Pilihan Ganda) | Bagian B (Esai Tulisan Tangan AI HTR) |
+|  - Tabel 4 Kolom (No, Jawaban, Kunci, Status) + Filter (Semua/Salah/Kosong/Ganda) |
+|  - Tombol Aksi: [Export PDF]  [Export Excel]  [Simpan Hasil]  [Scan LJK Baru]     |
++-----------------------------------------------------------------------------------+
+3. Rincian Detail Setiap Bagian:
+A. Header Navigasi (Bilah Atas)
+Kiri: Logo pemindai cerdas dengan badge status v2.4 Pro Active.
+Kanan (Tombol Aksi Cepat):
+Kunci Jawaban: Membuka popup manajemen kunci jawaban (bisa ketik cepat atau upload file Excel).
+Batch Scan: Membuka modal pemindaian massal untuk banyak lembar siswa sekaligus.
+Cetak LJK: Menghasilkan lembar LJK resmi PDF siap cetak di kertas A4/F4.
+Riwayat: Membuka arsip hasil scan yang tersimpan di memori browser.
+Upload Gambar / Kamera: Input file gambar atau akses langsung kamera perangkat.
+B. Lembar Interaktif LJK (Panel Sisi Kiri)
+Kanvas Pemindai Digital: Menampilkan lembar LJK autentik beresolusi tinggi dengan 4 titik fiducial marker di setiap sudutnya.
+Simulasi Arsiran Nyata: Arsiran hitam pensil 2B dilengkapi gradien pantulan grafit realistis.
+Overlay Bounding Box:
+Cincin Hijau: Bulatan jawaban yang berhasil terdeteksi sah.
+Cincin Merah: Deteksi arsiran ganda (multiple mark).
+Cincin Kuning: Peringatan butir yang terlewat atau kosong.
+Tombol Coba Contoh Cepat: Di bagian bawah kanvas terdapat tombol instan untuk menguji model:
+✨ Hybrid (25 PG + 5 Esai)
+SMP/SMA (50 A-E)
+SD (40 A-D)
+C. Panel Analisis & Diagnostik Pemindaian (Panel Sisi Kanan)
+Kartu Laser Scanner: Saat proses scan berjalan, animasi garis laser biru/cyan memindai lembar per butir soal secara visual disertai persentase progres.
+Diagnostik Citra: Menampilkan status Skew Angle (0.2°), Kontras Citra, dan Pencahayaan.
+Informasi Siswa: Menampilkan Nama, NISN, Mata Pelajaran, Kelas, dan Batas Kelulusan (KKM).
+D. Bagian Hasil Scan & Rekapitulasi Nilai (Panel Bawah)
+6 Kartu Ringkasan KPI:
+Nilai Akhir: Angka nilai besar di dalam lingkaran hijau neon tebal beserta predikat kualitatif (Sangat Baik / Baik / Remedial).
+Jumlah Butir Soal: Total butir PG dan soal esai.
+Jawaban Benar: Jumlah benar beserta persentase akurasi.
+Jawaban Salah: Jumlah butir salah (warna merah).
+Jawaban Kosong: Jumlah butir yang tidak diisi siswa.
+Waktu Proses: Durasi komputasi scanner (misal: 0.08 detik).
+Mode Tampilan Tab:
+Bagian A (Pilihan Ganda): Tabel detail 4 kolom yang memuat Nomor Soal, Jawaban Siswa, Kunci Guru, dan Ikon Status (Centang/Silang). Setiap baris dapat diklik untuk membuka modal inspeksi kehitaman (pixel density) dan koreksi manual.
+Bagian B (Esai Tulisan Tangan AI HTR): Menampilkan hasil transkripsi teks tulisan tangan siswa, skor perolehan yang dapat diubah guru secara bebas, serta badge kecocokan kata kunci rubrik.
+Tombol Ekspor Laporan: Tombol ekspor ke format Excel (.xlsx) multi-sheet dan PDF Resmi siap cetak.
