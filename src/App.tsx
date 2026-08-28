@@ -479,7 +479,7 @@ export const App: React.FC = () => {
               });
             }}
             onSaveResult={handleSaveResult}
-            onScanNew={() => startScanFlow(student)}
+            onScanNew={() => document.getElementById('ljk-file-upload-input')?.click()}
             onQuestionClick={(qNum) => setReviewingQuestionNum(qNum)}
             onUpdateEssayScore={handleUpdateEssayScore}
             isSaved={isSaved}

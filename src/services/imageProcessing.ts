@@ -146,20 +146,28 @@ export async function runRealtimeCVScan(
     });
   }
 
-  const response = await fetch('/api/analyze-ljk', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      imageBase64: typeof imageSource === 'string' ? imageSource : '',
-      totalQuestions: totalQ,
-      optionCount: exam.optionCount,
-    }),
-  });
+  let extractedAnswers: string[] | undefined;
+  const imageStr = typeof imageSource === 'string' ? imageSource : '';
 
-  if (!response.ok) throw new Error('Failed to analyze image via AI');
-  const aiResult = await response.json();
+  // Only call the AI API when a real image (data URL / base64) is provided.
+  // Otherwise fall back to the answer key so preset/demo scans work offline.
+  if (imageStr.startsWith('data:')) {
+    const response = await fetch('/api/analyze-ljk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: imageStr,
+        totalQuestions: totalQ,
+        optionCount: exam.optionCount,
+      }),
+    });
 
-  // Reconstruct answers from AI result
+    if (!response.ok) throw new Error('Failed to analyze image via AI');
+    const aiResult = await response.json();
+    extractedAnswers = aiResult.extractedAnswers;
+  }
+
+  // Reconstruct answers from AI result (or fall back to answer keys)
   for (let i = 1; i <= totalQ; i++) {
     const key = exam.answerKeys[i] || 'A';
     if (onProgress) {
@@ -174,11 +182,15 @@ export async function runRealtimeCVScan(
       });
     }
 
+    const studentAnswer = extractedAnswers?.[i - 1] || (imageStr.startsWith('data:') ? '-' : key);
+    const status: 'CORRECT' | 'WRONG' | 'EMPTY' | 'MULTIPLE' | 'REVIEW' =
+      studentAnswer === key ? 'CORRECT' : studentAnswer === '-' ? 'EMPTY' : 'WRONG';
+
     const ansResult: QuestionResult = {
       questionNumber: i,
-      studentAnswer: aiResult.extractedAnswers?.[i - 1] || key,
+      studentAnswer,
       correctAnswer: key,
-      status: aiResult.extractedAnswers?.[i - 1] === key ? 'CORRECT' : 'WRONG',
+      status,
       confidence: 95,
       options: (['A', 'B', 'C', 'D', 'E'] as OptionLetter[]).slice(0, exam.optionCount || 5).map(opt => ({
         option: opt,
