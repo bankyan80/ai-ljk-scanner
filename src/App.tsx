@@ -11,6 +11,7 @@ import { AnswerKeyModal } from './components/AnswerKeyModal';
 import { HistoryModal } from './components/HistoryModal';
 import { BatchScanModal } from './components/BatchScanModal';
 import { TemplateModal } from './components/TemplateModal';
+import { SourcePickerModal } from './components/SourcePickerModal';
 
 import { 
   AnalysisProgress, 
@@ -71,6 +72,7 @@ export const App: React.FC = () => {
 
   // Modals & Overlays
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
   const [isAnswerKeyOpen, setIsAnswerKeyOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isBatchScanOpen, setIsBatchScanOpen] = useState(false);
@@ -479,7 +481,7 @@ export const App: React.FC = () => {
               });
             }}
             onSaveResult={handleSaveResult}
-            onScanNew={() => document.getElementById('ljk-file-upload-input')?.click()}
+            onScanNew={() => setIsSourcePickerOpen(true)}
             onQuestionClick={(qNum) => setReviewingQuestionNum(qNum)}
             onUpdateEssayScore={handleUpdateEssayScore}
             isSaved={isSaved}
@@ -501,6 +503,14 @@ export const App: React.FC = () => {
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
+      />
+
+      {/* Scan Source Picker Modal */}
+      <SourcePickerModal
+        isOpen={isSourcePickerOpen}
+        onClose={() => setIsSourcePickerOpen(false)}
+        onUpload={() => document.getElementById('ljk-file-upload-input')?.click()}
+        onCamera={() => setIsCameraOpen(true)}
       />
 
       {/* Answer Key & Exam Builder Modal */}
