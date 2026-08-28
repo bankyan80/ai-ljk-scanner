@@ -302,7 +302,7 @@ export async function runRealtimeCVScan(
         };
       }),
     };
-    if (aiNote) (ansResult as QuestionResult & { aiNote?: string }).aiNote = aiNote;
+    if (aiNote) ansResult.aiNote = aiNote;
     answers.push(ansResult);
   }
 

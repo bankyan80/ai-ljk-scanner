@@ -12,7 +12,7 @@ import { HistoryModal } from './components/HistoryModal';
 import { BatchScanModal } from './components/BatchScanModal';
 import { TemplateModal } from './components/TemplateModal';
 import { SourcePickerModal } from './components/SourcePickerModal';
-import { Camera, FileText, FileSpreadsheet, X } from 'lucide-react';
+import { Camera, FileText, FileSpreadsheet, X, AlertTriangle } from 'lucide-react';
 
 import { 
   AnalysisProgress, 
@@ -457,6 +457,12 @@ export const App: React.FC = () => {
                       <span className="text-rose-400">✗ {metrics.wrong}</span>
                       <span className="text-amber-400">○ {metrics.empty}</span>
                     </div>
+                    {answers.filter((a) => a.status === 'REVIEW' || a.flaggedForReview || a.confidence < 60).length > 0 && (
+                      <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-300 mt-0.5">
+                        <AlertTriangle className="w-3 h-3" />
+                        {answers.filter((a) => a.status === 'REVIEW' || a.flaggedForReview || a.confidence < 60).length} soal perlu review
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">

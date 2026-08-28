@@ -55,12 +55,6 @@ export const ManualReviewModal: React.FC<ManualReviewModalProps> = ({
         </div>
 
         {/* Status Alert if multiple / low confidence */}
-        {question.status === 'MULTIPLE' && (
-          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-rose-950/40 border border-rose-600/40 text-rose-300 text-xs">
-            <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
-            <span>Sistem mendeteksi kemungkinan jawaban ganda (lebih dari 1 bulatan terisi pekat).</span>
-          </div>
-        )}
 
         {question.status === 'EMPTY' && (
           <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-950/40 border border-amber-600/40 text-amber-300 text-xs">
@@ -68,6 +62,44 @@ export const ManualReviewModal: React.FC<ManualReviewModalProps> = ({
             <span>Tidak ada bulatan dengan kehitaman yang memenuhi ambang batas (Jawaban Kosong).</span>
           </div>
         )}
+
+        {(question.status === 'REVIEW' || question.flaggedForReview) && (
+          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-indigo-950/40 border border-indigo-600/40 text-indigo-300 text-xs">
+            <AlertTriangle className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+            <span>
+              AI kurang yakin dengan jawaban ini (confidence {question.confidence}%). Perlu verifikasi manual oleh guru.
+              {question.aiNote && <span className="block mt-1 text-indigo-300/80 italic">Catatan AI: {question.aiNote}</span>}
+            </span>
+          </div>
+        )}
+
+        {question.studentAnswer === 'X' && (
+          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-800/60 border border-slate-600/40 text-slate-300 text-xs">
+            <AlertTriangle className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <span>AI mendeteksi tanda silang / coretan pada pilihan soal ini.</span>
+          </div>
+        )}
+
+        {question.status === 'MULTIPLE' && (
+          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-rose-950/40 border border-rose-600/40 text-rose-300 text-xs">
+            <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            <span>Jawaban ganda terdeteksi: <strong className="font-mono">{question.studentAnswer}</strong>. Mohon tentukan jawaban final.</span>
+          </div>
+        )}
+
+        {/* Confidence Meter */}
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/70 border border-slate-800 text-xs">
+          <span className="text-[11px] font-bold text-slate-400 uppercase font-mono">Keyakinan AI:</span>
+          <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full ${
+                question.confidence >= 80 ? 'bg-emerald-400' : question.confidence >= 60 ? 'bg-amber-400' : 'bg-rose-400'
+              }`}
+              style={{ width: `${question.confidence}%` }}
+            />
+          </div>
+          <span className="font-mono font-bold text-slate-200 w-10 text-right">{question.confidence}%</span>
+        </div>
 
         {/* Density Breakdown per Option */}
         <div className="flex flex-col gap-2.5 bg-slate-900/80 p-4 rounded-xl border border-slate-800">

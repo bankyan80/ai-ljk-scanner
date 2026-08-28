@@ -28,6 +28,7 @@ export interface QuestionResult {
   options: OptionDensity[];
   isManualOverride?: boolean;
   flaggedForReview?: boolean;
+  aiNote?: string;
   blockCoordinates?: {
     x: number;
     y: number;

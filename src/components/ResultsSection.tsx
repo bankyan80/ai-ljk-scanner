@@ -322,6 +322,8 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
                         const isWrong = ans.status === 'WRONG';
                         const isEmpty = ans.status === 'EMPTY';
                         const isMultiple = ans.status === 'MULTIPLE';
+                        const isReview = ans.status === 'REVIEW' || ans.flaggedForReview || ans.confidence < 60;
+                        const isCross = ans.studentAnswer === 'X';
 
                         return (
                           <div
@@ -371,6 +373,16 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
                               {isMultiple && (
                                 <span className="px-1 py-0.2 bg-rose-950 text-rose-400 rounded text-[9px] font-bold border border-rose-800/50">
                                   (Ganda)
+                                </span>
+                              )}
+                              {isCross && (
+                                <span className="px-1 py-0.2 bg-slate-800 text-slate-300 rounded text-[9px] font-bold border border-slate-600/50">
+                                  (Silang)
+                                </span>
+                              )}
+                              {isReview && (
+                                <span className="px-1 py-0.2 bg-indigo-950 text-indigo-300 rounded text-[9px] font-bold border border-indigo-700/60">
+                                  (Review {ans.confidence}%)
                                 </span>
                               )}
                             </div>
