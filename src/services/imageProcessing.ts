@@ -1,6 +1,7 @@
 ﻿import { Exam, EssayQuestionResult, OptionLetter, QuestionResult, QuestionStatus, ScanMetrics, StudentInfo } from '../types';
 import { SAMPLE_STUDENT_ESSAY_ANSWERS } from '../data/sampleLJKs';
 import { findTemplateByCounts, saveTemplate, buildSignature } from './ljkTemplates';
+import { analyzeImageQuality } from './realtimeCV';
 
 export interface ProcessProgressCallback {
   (progress: {
@@ -161,6 +162,16 @@ export async function runRealtimeCVScan(
   // Only call the AI API when a real image (data URL / base64) is provided.
   // Otherwise fall back to the answer key so preset/demo scans work offline.
   if (imageStr.startsWith('data:')) {
+    // CV ringan (canvas): validasi kualitas gambar sebelum menghabiskan kuota API.
+    if (typeof document !== 'undefined') {
+      const quality = await analyzeImageQuality(imageStr);
+      if (!quality.ok) {
+        throw new Error(
+          quality.message || 'Kualitas gambar tidak memadai untuk analisis LJK.'
+        );
+      }
+    }
+
     // Build 1-indexed answer key array so Gemini can verify answers.
     const answerKeysArr: string[] = [];
     for (let i = 1; i <= totalQ; i++) {

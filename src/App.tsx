@@ -81,6 +81,7 @@ export const App: React.FC = () => {
   const [isTemplateGenOpen, setIsTemplateGenOpen] = useState(false);
   const [reviewingQuestionNum, setReviewingQuestionNum] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // History Records Repository
   const [history, setHistory] = useState<ScanResultRecord[]>(() => {
@@ -172,6 +173,7 @@ export const App: React.FC = () => {
     } catch (err) {
       console.error('Scan error:', err);
       setIsScanning(false);
+      setErrorMessage(err instanceof Error ? err.message : 'Terjadi kesalahan saat memindai LJK.');
     }
   };
 
@@ -387,6 +389,20 @@ export const App: React.FC = () => {
         onOpenTemplateGen={() => setIsTemplateGenOpen(true)}
         historyCount={history.length}
       />
+
+      {/* Error Banner (e.g. CV ringan menolak gambar kosong/rusak) */}
+      {isScanning && errorMessage && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 max-w-lg w-[92%] px-4 py-3 rounded-xl bg-rose-950/90 border border-rose-600/50 text-rose-200 text-xs shadow-2xl shadow-rose-900/40 animate-in slide-in-from-top duration-200">
+          <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+          <span className="flex-1">{errorMessage}</span>
+          <button
+            onClick={() => { setErrorMessage(null); setIsScanning(false); }}
+            className="p-1 rounded-md text-rose-300 hover:text-white hover:bg-rose-900/60 transition"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Main Container */}
       <main className="flex-1 min-h-0 max-w-[1600px] w-full mx-auto px-3 lg:px-6 py-3 flex flex-col gap-3">
