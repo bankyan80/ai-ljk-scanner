@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const result = await queue.add(async () => {
-      const { imageBase64, totalQuestions = 50, optionCount = 5 } = req.body;
+      const { imageBase64, totalQuestions = 50, optionCount = 5, answerKeys } = req.body;
 
       if (!imageBase64) {
         throw new Error("Missing imageBase64 in request body");
@@ -70,6 +70,29 @@ Analisis gambar LJK ini dan ekstrak informasi berikut dalam format JSON:
 
 Kembalikan HANYA JSON valid tanpa markdown blok \`\`\`json.`;
 
+      // Build answer-key context for Gemini verification if provided.
+      let answerKeyContext = "";
+      if (Array.isArray(answerKeys) && answerKeys.length > 1) {
+        const pairs: string[] = [];
+        for (let i = 1; i < answerKeys.length; i++) {
+          pairs.push(`${i}:${answerKeys[i] || "A"}`);
+        }
+        answerKeyContext =
+          "\n\n3. KUNCI JAWABAN (untuk verifikasi benar/salah):\n" +
+          pairs.join(", ") +
+          "\n\nBandingkan extractedAnswers dengan kunci jawaban ini, lalu pada field verificationResults isi untuk SETIAP soal (index dimulai dari 1):\n" +
+          "- status: salah satu dari \"CORRECT\" | \"WRONG\" | \"EMPTY\" | \"MULTIPLE\" | \"REVIEW\"\n" +
+          "  - CORRECT = jawaban siswa sama dengan kunci\n" +
+          "  - WRONG = jawaban siswa terisi tapi berbeda dari kunci\n" +
+          "  - EMPTY = LJK kosong untuk soal ini\n" +
+          "  - MULTIPLE = lebih dari satu pilihan terisi untuk soal ini\n" +
+          "  - REVIEW = ragu-ragu / perlu pengecekan manual\n" +
+          "- studentAnswer: jawaban terisi yang terbaca (gunakan \"-\" bila kosong)\n" +
+          "verificationResults harus berupa array 1-indexed (verificationResults[1] untuk soal 1, dst).";
+      }
+
+      const fullPrompt = prompt + answerKeyContext;
+
       const response = await client.models.generateContent({
         model: "gemini-3.7-flash",
         contents: {
@@ -81,7 +104,7 @@ Kembalikan HANYA JSON valid tanpa markdown blok \`\`\`json.`;
               },
             },
             {
-              text: prompt,
+              text: fullPrompt,
             },
           ],
         },

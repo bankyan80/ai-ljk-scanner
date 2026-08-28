@@ -1,4 +1,4 @@
-﻿import { Exam, EssayQuestionResult, OptionLetter, QuestionResult, ScanMetrics, StudentInfo } from '../types';
+﻿import { Exam, EssayQuestionResult, OptionLetter, QuestionResult, QuestionStatus, ScanMetrics, StudentInfo } from '../types';
 import { SAMPLE_STUDENT_ESSAY_ANSWERS } from '../data/sampleLJKs';
 
 export interface ProcessProgressCallback {
@@ -147,11 +147,17 @@ export async function runRealtimeCVScan(
   }
 
   let extractedAnswers: string[] | undefined;
+  let aiVerification: ({ status?: string; studentAnswer?: string } | undefined)[] | undefined;
   const imageStr = typeof imageSource === 'string' ? imageSource : '';
 
   // Only call the AI API when a real image (data URL / base64) is provided.
   // Otherwise fall back to the answer key so preset/demo scans work offline.
   if (imageStr.startsWith('data:')) {
+    // Build 1-indexed answer key array so Gemini can verify answers.
+    const answerKeysArr: string[] = [];
+    for (let i = 1; i <= totalQ; i++) {
+      answerKeysArr[i] = exam.answerKeys[i] || 'A';
+    }
     const response = await fetch('/api/analyze-ljk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -159,12 +165,14 @@ export async function runRealtimeCVScan(
         imageBase64: imageStr,
         totalQuestions: totalQ,
         optionCount: exam.optionCount,
+        answerKeys: answerKeysArr,
       }),
     });
 
     if (!response.ok) throw new Error('Failed to analyze image via AI');
     const aiResult = await response.json();
     extractedAnswers = aiResult.extractedAnswers;
+    aiVerification = aiResult.verificationResults;
   }
 
   // Reconstruct answers from AI result (or fall back to answer keys)
@@ -182,9 +190,22 @@ export async function runRealtimeCVScan(
       });
     }
 
-    const studentAnswer = extractedAnswers?.[i - 1] || (imageStr.startsWith('data:') ? '-' : key);
-    const status: 'CORRECT' | 'WRONG' | 'EMPTY' | 'MULTIPLE' | 'REVIEW' =
-      studentAnswer === key ? 'CORRECT' : studentAnswer === '-' ? 'EMPTY' : 'WRONG';
+    // Prefer Gemini's verification status when available; otherwise fall back to local matching.
+    // Gemini may return verificationResults 1-indexed or 0-indexed; handle both defensively.
+    const aiVerified =
+      (aiVerification?.[i] && aiVerification[i].status) ? aiVerification[i] :
+      (aiVerification?.[i - 1] && aiVerification[i - 1].status) ? aiVerification[i - 1] :
+      undefined;
+    let studentAnswer = extractedAnswers?.[i - 1] || (imageStr.startsWith('data:') ? '-' : key);
+    let status: 'CORRECT' | 'WRONG' | 'EMPTY' | 'MULTIPLE' | 'REVIEW';
+
+    if (aiVerified) {
+      const v = aiVerified;
+      studentAnswer = (v.status === 'MULTIPLE' ? (v.studentAnswer || studentAnswer) : studentAnswer);
+      status = (v.status as QuestionStatus) || (studentAnswer === key ? 'CORRECT' : studentAnswer === '-' ? 'EMPTY' : 'WRONG');
+    } else {
+      status = studentAnswer === key ? 'CORRECT' : studentAnswer === '-' ? 'EMPTY' : 'WRONG';
+    }
 
     const ansResult: QuestionResult = {
       questionNumber: i,
