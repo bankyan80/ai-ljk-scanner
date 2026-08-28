@@ -4,11 +4,7 @@ import {
   CheckCircle2, 
   Loader2, 
   Check, 
-  Sparkles, 
   User, 
-  FileSpreadsheet, 
-  ShieldCheck,
-  AlertCircle
 } from 'lucide-react';
 import { AnalysisProgress, Exam, StudentInfo } from '../types';
 
@@ -164,37 +160,6 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             <span>Validasi jawaban</span>
           </div>
         </div>
-      </div>
-
-      {/* Legend Box matching Mockup */}
-      <div className="w-full rounded-xl bg-slate-950/90 border border-slate-800/80 p-3.5 flex flex-col gap-2 text-xs">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
-          Keterangan Deteksi:
-        </span>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center gap-2 text-slate-300">
-            <span className="w-3.5 h-3.5 rounded-full border-2 border-emerald-500 flex-shrink-0" />
-            <span>Terisi (1 jawaban)</span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-300">
-            <span className="w-3.5 h-3.5 rounded-full border-2 border-amber-500 flex-shrink-0" />
-            <span>Kosong</span>
-          </div>
-          <div className="flex items-center gap-2 text-slate-300">
-            <span className="w-3.5 h-3.5 rounded-full border-2 border-red-500 flex-shrink-0" />
-            <span>Lebih dari 1 jawaban (Ganda)</span>
-          </div>
-        </div>
-      </div>
-
-      {/* AI Insight Callout Card */}
-      <div className="w-full rounded-xl bg-gradient-to-br from-indigo-950/40 to-slate-900/60 border border-indigo-500/30 p-3.5 flex items-start gap-3 text-xs text-indigo-200">
-        <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex-shrink-0 mt-0.5">
-          <Sparkles className="w-4 h-4" />
-        </div>
-        <p className="text-[11px] leading-relaxed text-slate-300">
-          AI sedang menganalisis tingkat kehitaman, posisi, dan pola jawaban untuk memastikan hasil yang akurat.
-        </p>
       </div>
 
       {/* Recognized Student Identity Card */}

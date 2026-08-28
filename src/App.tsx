@@ -12,6 +12,7 @@ import { HistoryModal } from './components/HistoryModal';
 import { BatchScanModal } from './components/BatchScanModal';
 import { TemplateModal } from './components/TemplateModal';
 import { SourcePickerModal } from './components/SourcePickerModal';
+import { Camera, FileText, FileSpreadsheet, X } from 'lucide-react';
 
 import { 
   AnalysisProgress, 
@@ -73,6 +74,7 @@ export const App: React.FC = () => {
   // Modals & Overlays
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
+  const [isResultsOpen, setIsResultsOpen] = useState(false);
   const [isAnswerKeyOpen, setIsAnswerKeyOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isBatchScanOpen, setIsBatchScanOpen] = useState(false);
@@ -396,10 +398,10 @@ export const App: React.FC = () => {
           }}
         />
 
-        {/* Top Split Layout: Left Viewer + Right Analysis Panel */}
-        <div className="flex-[2] min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4">
-          {/* Left Column: LJK Sheet Interactive Viewport (7 Cols) */}
-          <div className="lg:col-span-7 w-full min-h-0 flex flex-col">
+        {/* Two-Column Body: Left Visual + Right Control Panel (single screen) */}
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4">
+          {/* Left: LJK Sheet Interactive Viewport (large visual) */}
+          <div className="lg:col-span-8 w-full min-h-0 flex flex-col">
             <LJKCanvasViewer
               student={student}
               exam={activeExam}
@@ -415,77 +417,132 @@ export const App: React.FC = () => {
             />
           </div>
 
-          {/* Right Column: Realtime Analysis Panel (5 Cols) */}
-          <div className="lg:col-span-5 w-full min-h-0 flex flex-col">
-            <AnalysisPanel
-              progress={analysisProgress}
-              isScanning={isScanning}
-              student={student}
-              exam={activeExam}
-              onTriggerRescan={() => startScanFlow(student)}
-            />
-          </div>
-        </div>
+          {/* Right: Control Panel with Analysis + Score Summary + Actions */}
+          <div className="lg:col-span-4 w-full min-h-0 flex flex-col gap-3">
+            {/* Source switchers (upload / camera) */}
+            <div className="shrink-0 flex items-center gap-2">
+              <button
+                onClick={() => setIsSourcePickerOpen(true)}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-indigo-500/25 ring-1 ring-cyan-400/40"
+              >
+                <Camera className="w-4 h-4" />
+                <span>Scan LJK Baru</span>
+              </button>
+            </div>
 
-        {/* Bottom Full-Width Section: HASIL SCAN (Matching Mockup) */}
-        <div className="w-full flex-[3] min-h-0">
-          <ResultsSection
-            metrics={metrics}
-            answers={answers}
-            essayAnswers={essayAnswers}
-            student={student}
-            onExportPDF={() => {
-              exportSingleResultToPDF({
-                id: 'current',
-                examId: activeExam.id,
-                examName: activeExam.name,
-                student,
-                template: {
-                  id: activeExam.templateId,
-                  name: activeExam.name,
-                  description: '',
-                  modelType: activeExam.hasEssaySection ? 'HYBRID_PG_ESSAY' : 'STANDARD_BUBBLE_SHEET',
-                  totalQuestions: activeExam.totalQuestions,
-                  optionCount: activeExam.optionCount,
-                  columnsCount: activeExam.hasEssaySection ? 2 : 3,
-                  passingGrade: activeExam.passingGrade,
-                },
-                metrics,
-                answers,
-                essayAnswers,
-                scannedAt: new Date().toISOString(),
-                status: 'VERIFIED',
-              });
-            }}
-            onExportExcel={() => {
-              exportSingleResultToExcel({
-                id: 'current',
-                examId: activeExam.id,
-                examName: activeExam.name,
-                student,
-                template: {
-                  id: activeExam.templateId,
-                  name: activeExam.name,
-                  description: '',
-                  modelType: activeExam.hasEssaySection ? 'HYBRID_PG_ESSAY' : 'STANDARD_BUBBLE_SHEET',
-                  totalQuestions: activeExam.totalQuestions,
-                  optionCount: activeExam.optionCount,
-                  columnsCount: activeExam.hasEssaySection ? 2 : 3,
-                  passingGrade: activeExam.passingGrade,
-                },
-                metrics,
-                answers,
-                essayAnswers,
-                scannedAt: new Date().toISOString(),
-                status: 'VERIFIED',
-              });
-            }}
-            onSaveResult={handleSaveResult}
-            onScanNew={() => setIsSourcePickerOpen(true)}
-            onQuestionClick={(qNum) => setReviewingQuestionNum(qNum)}
-            onUpdateEssayScore={handleUpdateEssayScore}
-            isSaved={isSaved}
-          />
+            {/* Realtime Analysis Panel */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <AnalysisPanel
+                progress={analysisProgress}
+                isScanning={isScanning}
+                student={student}
+                exam={activeExam}
+                onTriggerRescan={() => startScanFlow(student)}
+              />
+            </div>
+
+            {/* Score Summary + Actions */}
+            <div className="shrink-0 w-full rounded-2xl bg-slate-950/90 border border-slate-800/80 p-3.5 flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-14 h-14 rounded-full border-4 border-emerald-500 flex flex-col items-center justify-center bg-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                    <span className="text-lg font-extrabold text-white font-mono leading-none">{metrics.score}</span>
+                    <span className="text-[8px] text-emerald-400 font-mono font-bold">{metrics.qualitativeGrade}</span>
+                  </div>
+                  <div className="flex flex-col gap-0.5 text-[11px]">
+                    <span className="font-bold text-white">{student.name}</span>
+                    <span className="text-slate-400">{student.className} • {student.subject}</span>
+                    <div className="flex items-center gap-2.5 font-mono font-bold">
+                      <span className="text-emerald-400">✓ {metrics.correct}</span>
+                      <span className="text-rose-400">✗ {metrics.wrong}</span>
+                      <span className="text-amber-400">○ {metrics.empty}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <button
+                    onClick={() => setIsResultsOpen(true)}
+                    className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-[11px] font-bold transition shadow-md shadow-cyan-600/25"
+                  >
+                    Lihat Detail
+                  </button>
+                  <button
+                    onClick={handleSaveResult}
+                    disabled={isSaved}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition ${
+                      isSaved
+                        ? 'bg-emerald-700/30 text-emerald-300 border border-emerald-600/40'
+                        : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/25'
+                    }`}
+                  >
+                    {isSaved ? '✓ Tersimpan' : 'Simpan'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Export actions */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    exportSingleResultToPDF({
+                      id: 'current',
+                      examId: activeExam.id,
+                      examName: activeExam.name,
+                      student,
+                      template: {
+                        id: activeExam.templateId,
+                        name: activeExam.name,
+                        description: '',
+                        modelType: activeExam.hasEssaySection ? 'HYBRID_PG_ESSAY' : 'STANDARD_BUBBLE_SHEET',
+                        totalQuestions: activeExam.totalQuestions,
+                        optionCount: activeExam.optionCount,
+                        columnsCount: activeExam.hasEssaySection ? 2 : 3,
+                        passingGrade: activeExam.passingGrade,
+                      },
+                      metrics,
+                      answers,
+                      essayAnswers,
+                      scannedAt: new Date().toISOString(),
+                      status: 'VERIFIED',
+                    });
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl text-[11px] font-semibold transition"
+                >
+                  <FileText className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Export PDF</span>
+                </button>
+                <button
+                  onClick={() => {
+                    exportSingleResultToExcel({
+                      id: 'current',
+                      examId: activeExam.id,
+                      examName: activeExam.name,
+                      student,
+                      template: {
+                        id: activeExam.templateId,
+                        name: activeExam.name,
+                        description: '',
+                        modelType: activeExam.hasEssaySection ? 'HYBRID_PG_ESSAY' : 'STANDARD_BUBBLE_SHEET',
+                        totalQuestions: activeExam.totalQuestions,
+                        optionCount: activeExam.optionCount,
+                        columnsCount: activeExam.hasEssaySection ? 2 : 3,
+                        passingGrade: activeExam.passingGrade,
+                      },
+                      metrics,
+                      answers,
+                      essayAnswers,
+                      scannedAt: new Date().toISOString(),
+                      status: 'VERIFIED',
+                    });
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl text-[11px] font-semibold transition"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Export Excel</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -512,6 +569,98 @@ export const App: React.FC = () => {
         onUpload={() => document.getElementById('ljk-file-upload-input')?.click()}
         onCamera={() => setIsCameraOpen(true)}
       />
+
+      {/* Detailed Results Modal */}
+      {isResultsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-6xl h-[90vh] rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-mono">Detail Hasil Scan</h3>
+                  <p className="text-xs text-slate-400">{student.name} ({student.nisn})</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsResultsOpen(false)}
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {/* Scrollable Results Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-4">
+              <ResultsSection
+                metrics={metrics}
+                answers={answers}
+                essayAnswers={essayAnswers}
+                student={student}
+                onExportPDF={() => {
+                  exportSingleResultToPDF({
+                    id: 'current',
+                    examId: activeExam.id,
+                    examName: activeExam.name,
+                    student,
+                    template: {
+                      id: activeExam.templateId,
+                      name: activeExam.name,
+                      description: '',
+                      modelType: activeExam.hasEssaySection ? 'HYBRID_PG_ESSAY' : 'STANDARD_BUBBLE_SHEET',
+                      totalQuestions: activeExam.totalQuestions,
+                      optionCount: activeExam.optionCount,
+                      columnsCount: activeExam.hasEssaySection ? 2 : 3,
+                      passingGrade: activeExam.passingGrade,
+                    },
+                    metrics,
+                    answers,
+                    essayAnswers,
+                    scannedAt: new Date().toISOString(),
+                    status: 'VERIFIED',
+                  });
+                }}
+                onExportExcel={() => {
+                  exportSingleResultToExcel({
+                    id: 'current',
+                    examId: activeExam.id,
+                    examName: activeExam.name,
+                    student,
+                    template: {
+                      id: activeExam.templateId,
+                      name: activeExam.name,
+                      description: '',
+                      modelType: activeExam.hasEssaySection ? 'HYBRID_PG_ESSAY' : 'STANDARD_BUBBLE_SHEET',
+                      totalQuestions: activeExam.totalQuestions,
+                      optionCount: activeExam.optionCount,
+                      columnsCount: activeExam.hasEssaySection ? 2 : 3,
+                      passingGrade: activeExam.passingGrade,
+                    },
+                    metrics,
+                    answers,
+                    essayAnswers,
+                    scannedAt: new Date().toISOString(),
+                    status: 'VERIFIED',
+                  });
+                }}
+                onSaveResult={() => {
+                  handleSaveResult();
+                  setIsResultsOpen(false);
+                }}
+                onScanNew={() => {
+                  setIsResultsOpen(false);
+                  setIsSourcePickerOpen(true);
+                }}
+                onQuestionClick={(qNum) => setReviewingQuestionNum(qNum)}
+                onUpdateEssayScore={handleUpdateEssayScore}
+                isSaved={isSaved}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Answer Key & Exam Builder Modal */}
       <AnswerKeyModal
