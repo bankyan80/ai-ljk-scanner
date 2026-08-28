@@ -84,6 +84,7 @@ export const App: React.FC = () => {
   const [reviewingQuestionNum, setReviewingQuestionNum] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [scanMode, setScanMode] = useState<'normal' | 'detail' | 'demo'>('demo');
 
   // History Records Repository
   const [history, setHistory] = useState<ScanResultRecord[]>(() => {
@@ -428,6 +429,8 @@ export const App: React.FC = () => {
               activeScanningQIndex={activeScanningQIndex}
               laserYPercent={laserYPercent}
               isScanning={isScanning}
+              mode={scanMode}
+              onModeChange={setScanMode}
               onUploadClick={() => document.getElementById('ljk-file-upload-input')?.click()}
               onCameraClick={() => setIsCameraOpen(true)}
               onLoadPreset={handleLoadPreset}

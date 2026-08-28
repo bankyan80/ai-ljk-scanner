@@ -9,8 +9,10 @@ import {
   Sparkles,
   Maximize2
 } from 'lucide-react';
-import { Exam, QuestionResult, StudentInfo } from '../types';
+import { Exam, QuestionResult, ScanMode, StudentInfo } from '../types';
 import { drawAuthenticLJKSheet } from '../data/sampleLJKs';
+import { useDeepScanAnimation } from '../hooks/useDeepScanAnimation';
+import { DeepScanHud } from './DeepScanHud';
 
 interface LJKCanvasViewerProps {
   student: StudentInfo;
@@ -19,6 +21,8 @@ interface LJKCanvasViewerProps {
   activeScanningQIndex: number;
   laserYPercent: number; // 0 - 100%
   isScanning: boolean;
+  mode: ScanMode;
+  onModeChange: (m: ScanMode) => void;
   onUploadClick: () => void;
   onCameraClick: () => void;
   onLoadPreset: (presetId: string) => void;
@@ -33,6 +37,8 @@ export const LJKCanvasViewer: React.FC<LJKCanvasViewerProps> = ({
   activeScanningQIndex,
   laserYPercent,
   isScanning,
+  mode,
+  onModeChange,
   onUploadClick,
   onCameraClick,
   onLoadPreset,
@@ -104,6 +110,15 @@ export const LJKCanvasViewer: React.FC<LJKCanvasViewerProps> = ({
   const activeQuestionNumber = activeScanningQIndex >= 0 ? activeScanningQIndex + 1 : (answers.length > 0 ? answers.length : 28);
   const totalQuestions = exam.totalQuestions || 50;
 
+  // AI Deep Scan: per-question staged visualization clock (cosmetic only).
+  const deepScan = useDeepScanAnimation({
+    isScanning,
+    mode,
+    totalQuestions,
+    questions: answers,
+  });
+  const deepScanQuestion = answers[deepScan.qIndex];
+
   return (
     <div className="flex flex-col gap-3.5 w-full min-h-0">
       {/* Viewer Frame Container */}
@@ -147,6 +162,15 @@ export const LJKCanvasViewer: React.FC<LJKCanvasViewerProps> = ({
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-6 bg-white/70 rounded-full blur-sm" />
             </div>
           )}
+
+          {/* AI Deep Scan HUD overlay (per-question staged visualization) */}
+          {isScanning && (
+            <DeepScanHud
+              state={deepScan}
+              question={deepScanQuestion}
+              mode={mode}
+            />
+          )}
         </div>
 
         {/* Realtime Scan Status Sub-bar */}
@@ -184,6 +208,26 @@ export const LJKCanvasViewer: React.FC<LJKCanvasViewerProps> = ({
             <Upload className="w-3.5 h-3.5" />
             <span>Upload LJK</span>
           </button>
+        </div>
+
+        {/* Deep Scan Animation Mode Selector */}
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="text-[11px] font-medium text-slate-500">Scanner:</span>
+          <div className="flex items-center rounded-lg bg-slate-900 border border-slate-700/70 p-0.5">
+            {(['normal', 'detail', 'demo'] as ScanMode[]).map((m) => (
+              <button
+                key={m}
+                onClick={() => onModeChange(m)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition ${
+                  mode === m
+                    ? 'bg-cyan-600 text-white shadow shadow-cyan-600/40'
+                    : 'text-slate-400 hover:text-cyan-300'
+                }`}
+              >
+                {m.charAt(0).toUpperCase() + m.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Preset Sample Switchers */}

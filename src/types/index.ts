@@ -136,6 +136,10 @@ export interface AnalysisProgress {
   detectedStudent?: Partial<StudentInfo>;
 }
 
+// Deep Scan Animation speed presets. Only affects the visualization pacing,
+// never the real scan processing pipeline.
+export type ScanMode = 'normal' | 'detail' | 'demo';
+
 export interface BatchItem {
   id: string;
   fileName: string;
