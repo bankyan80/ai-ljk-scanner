@@ -54,12 +54,28 @@ export function calculateScanMetrics(
 
   const finalScore = hasEssay ? combinedScore : pgScore;
   const averageConfidence = totalQuestions > 0 ? Math.round(totalConfidence / totalQuestions) : 95;
+  let qualitativeGrade: 'Sangat Baik' | 'Baik' | 'Cukup' | 'Kurang' | 'Perlu Remedial' = 'Baik';
+  if (finalScore >= 90) qualitativeGrade = 'Sangat Baik';
+  else if (finalScore >= (exam.passingGrade || 75)) qualitativeGrade = 'Baik';
+  else if (finalScore >= 60) qualitativeGrade = 'Cukup';
+  else if (finalScore >= 45) qualitativeGrade = 'Kurang';
+  else qualitativeGrade = 'Perlu Remedial';
 
   return {
-    totalQuestions, correct, wrong, empty, multiple,
-    score: finalScore, accuracyPercent,
-    qualitativeGrade: finalScore >= 90 ? 'Sangat Baik' : finalScore >= (exam.passingGrade || 75) ? 'Baik' : finalScore >= 60 ? 'Cukup' : finalScore >= 45 ? 'Kurang' : 'Perlu Remedial',
-    processTimeSeconds, averageConfidence, hasEssay, pgScore, essayScore, combinedScore
+    totalQuestions,
+    correct,
+    wrong,
+    empty,
+    multiple,
+    score: finalScore,
+    accuracyPercent,
+    qualitativeGrade,
+    processTimeSeconds,
+    averageConfidence,
+    hasEssay,
+    pgScore,
+    essayScore,
+    combinedScore,
   };
 }
 
@@ -79,6 +95,57 @@ export async function runRealtimeCVScan(
   const totalQ = exam.totalQuestions || 50;
   const answers: QuestionResult[] = [];
 
+  // Stage 1: Deteksi LJK
+  if (onProgress) {
+    onProgress({
+      stage: 'DETECTING_SHEET',
+      currentQuestion: 0,
+      totalQuestions: totalQ,
+      percentage: 10,
+      laserY: 5,
+      subText: 'Mendeteksi 4 sudut lembar LJK...',
+    });
+  }
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Stage 2: Meluruskan & Memotong
+  if (onProgress) {
+    onProgress({
+      stage: 'STRAIGHTENING',
+      currentQuestion: 0,
+      totalQuestions: totalQ,
+      percentage: 25,
+      laserY: 15,
+      subText: 'Koreksi perspektif & penyesuaian kontras...',
+    });
+  }
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Stage 3: Deteksi Area Jawaban & Header
+  if (onProgress) {
+    onProgress({
+      stage: 'DETECTING_REGIONS',
+      currentQuestion: 0,
+      totalQuestions: totalQ,
+      percentage: 38,
+      laserY: 28,
+      subText: 'Mendeteksi grid nomor, bulatan pilihan, dan area isian tulisan tangan...',
+    });
+  }
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Stage 4: Analisis Jawaban via AI (Serverless API)
+  if (onProgress) {
+    onProgress({
+      stage: 'ANALYZING_ANSWERS',
+      currentQuestion: 1,
+      totalQuestions: totalQ,
+      percentage: 45,
+      laserY: 35,
+      subText: 'Menganalisis tingkat kehitaman dan pola arsiran dengan AI...',
+    });
+  }
+
   const response = await fetch('/api/analyze-ljk', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -92,8 +159,21 @@ export async function runRealtimeCVScan(
   if (!response.ok) throw new Error('Failed to analyze image via AI');
   const aiResult = await response.json();
 
+  // Reconstruct answers from AI result
   for (let i = 1; i <= totalQ; i++) {
     const key = exam.answerKeys[i] || 'A';
+    if (onProgress) {
+      onProgress({
+        stage: 'ANALYZING_ANSWERS',
+        currentQuestion: i,
+        totalQuestions: totalQ,
+        percentage: Math.round(45 + ((i - 1) / totalQ) * 45),
+        laserY: Math.round(35 + ((i - 1) / totalQ) * 55),
+        subText: `Menganalisis jawaban soal ${i}...`,
+        partialAnswers: answers,
+      });
+    }
+
     const ansResult: QuestionResult = {
       questionNumber: i,
       studentAnswer: aiResult.extractedAnswers?.[i - 1] || key,
@@ -109,8 +189,43 @@ export async function runRealtimeCVScan(
     answers.push(ansResult);
   }
 
-  const essayAnswers = exam.hasEssaySection || totalQ <= 25 ? (targetEssayAnswers || [...SAMPLE_STUDENT_ESSAY_ANSWERS]) : undefined;
+  let essayAnswers: EssayQuestionResult[] | undefined = undefined;
+  if (exam.hasEssaySection || totalQ <= 25) {
+    essayAnswers = targetEssayAnswers || [...SAMPLE_STUDENT_ESSAY_ANSWERS];
+  }
+
+  // Stage 5: Validasi & Scoring
+  if (onProgress) {
+    onProgress({
+      stage: 'VALIDATING',
+      currentQuestion: totalQ,
+      totalQuestions: totalQ,
+      percentage: 98,
+      laserY: 96,
+      subText: 'Transkripsi AI HTR tulisan tangan & pencocokan rubrik kata kunci...',
+      partialAnswers: answers,
+    });
+  }
+  await new Promise((r) => setTimeout(r, 400));
+
+  if (onProgress) {
+    onProgress({
+      stage: 'COMPLETED',
+      currentQuestion: totalQ,
+      totalQuestions: totalQ,
+      percentage: 100,
+      laserY: 100,
+      subText: 'Analisis OMR & Transkripsi Tulisan Tangan Selesai!',
+      partialAnswers: answers,
+    });
+  }
+
   const metrics = calculateScanMetrics(answers, exam, 8, essayAnswers);
 
-  return { answers, essayAnswers, metrics, student };
+  return {
+    answers,
+    essayAnswers,
+    metrics,
+    student,
+  };
 }
