@@ -1,5 +1,6 @@
 ﻿import { Exam, EssayQuestionResult, OptionLetter, QuestionResult, QuestionStatus, ScanMetrics, StudentInfo } from '../types';
 import { SAMPLE_STUDENT_ESSAY_ANSWERS } from '../data/sampleLJKs';
+import { findTemplateByCounts, saveTemplate, buildSignature } from './ljkTemplates';
 
 export interface ProcessProgressCallback {
   (progress: {
@@ -165,6 +166,10 @@ export async function runRealtimeCVScan(
     for (let i = 1; i <= totalQ; i++) {
       answerKeysArr[i] = exam.answerKeys[i] || 'A';
     }
+
+    // Auto Template: reuse a previously saved layout for this question/option count.
+    const existingTemplate = findTemplateByCounts(totalQ, exam.optionCount || 5);
+
     const response = await fetch('/api/analyze-ljk', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -173,6 +178,14 @@ export async function runRealtimeCVScan(
         totalQuestions: totalQ,
         optionCount: exam.optionCount,
         answerKeys: answerKeysArr,
+        templateHint: existingTemplate
+          ? {
+              detectedType: existingTemplate.detectedType,
+              columns: existingTemplate.columns,
+              orientation: existingTemplate.orientation,
+              region: existingTemplate.region,
+            }
+          : undefined,
       }),
     });
 
@@ -180,6 +193,27 @@ export async function runRealtimeCVScan(
     const aiResult = await response.json();
     extractedAnswers = aiResult.extractedAnswers;
     aiAnswers = aiResult.answers;
+
+    // Auto Template: persist the recognized layout so later scans of the same
+    // LJK model are faster and more stable. Only save when a real layout returned.
+    if (aiResult.layout || aiResult.detectedType || aiResult.detectedTotalQuestions) {
+      const detectedType = aiResult.detectedType || existingTemplate?.detectedType || 'CUSTOM';
+      const detectedTotalQuestions =
+        aiResult.detectedTotalQuestions || aiResult.layout?.questionCount || totalQ;
+      const detectedOptionCount =
+        aiResult.detectedOptionCount || aiResult.layout?.optionCount || exam.optionCount || 5;
+      saveTemplate({
+        name: `${detectedType} ${detectedTotalQuestions} Soal (${detectedOptionCount} Pilihan)`,
+        detectedType,
+        detectedTotalQuestions,
+        detectedOptionCount,
+        columns: aiResult.columns || aiResult.layout?.columns,
+        orientation: aiResult.orientation || aiResult.layout?.orientation,
+        region: aiResult.region || aiResult.layout?.region,
+        signature: buildSignature(detectedType, detectedTotalQuestions, detectedOptionCount),
+        source: existingTemplate ? existingTemplate.detectedType || 'auto' : 'auto',
+      });
+    }
   }
 
   // Reconstruct answers from AI result (or fall back to answer keys)

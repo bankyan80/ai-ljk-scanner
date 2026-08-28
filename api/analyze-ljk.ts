@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const result = await queue.add(async () => {
-      const { imageBase64, totalQuestions = 50, optionCount = 5, answerKeys } = req.body;
+      const { imageBase64, totalQuestions = 50, optionCount = 5, answerKeys, templateHint } = req.body;
 
       if (!imageBase64) {
         throw new Error("Missing imageBase64 in request body");
@@ -122,7 +122,21 @@ Kembalikan HANYA JSON valid tanpa markdown blok \`\`\`json.`;
           "Prioritaskan REVIEW jika confidence < 0.6 meskipun cocok dengan kunci.";
       }
 
-      const fullPrompt = prompt + answerKeyContext;
+      // Add known layout context (Auto Template) when available.
+      let templateHintContext = "";
+      if (templateHint && typeof templateHint === "object") {
+        const h: any = templateHint;
+        templateHintContext =
+          "\n\nINFORMASI MODEL LJK YANG SUDAH DIKENALI (dari template tersimpan):\n" +
+          `- detectedType: ${h.detectedType || "CUSTOM"}\n` +
+          (h.columns ? `- columns: ${h.columns}\n` : "") +
+          (h.orientation ? `- orientation: ${h.orientation}\n` : "") +
+          (h.region?.answerRegion ? `- answerRegion: ${h.region.answerRegion}\n` : "") +
+          "Gunakan informasi ini untuk mempercepat dan mempertegas analisis struktur. " +
+          "Jika gambar sesuai dengan layout ini, ikuti strukturnya. Jika tidak, laporkan struktur sebenarnya.";
+      }
+
+      const fullPrompt = prompt + templateHintContext + answerKeyContext;
 
       const response = await client.models.generateContent({
         model: "gemini-3.7-flash",
