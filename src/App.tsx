@@ -11,6 +11,7 @@ import { AnswerKeyModal } from './components/AnswerKeyModal';
 import { HistoryModal } from './components/HistoryModal';
 import { BatchScanModal } from './components/BatchScanModal';
 import { TemplateModal } from './components/TemplateModal';
+import { SavedTemplatesModal } from './components/SavedTemplatesModal';
 import { SourcePickerModal } from './components/SourcePickerModal';
 import { Camera, FileText, FileSpreadsheet, X, AlertTriangle } from 'lucide-react';
 
@@ -79,6 +80,7 @@ export const App: React.FC = () => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isBatchScanOpen, setIsBatchScanOpen] = useState(false);
   const [isTemplateGenOpen, setIsTemplateGenOpen] = useState(false);
+  const [isSavedTemplatesOpen, setIsSavedTemplatesOpen] = useState(false);
   const [reviewingQuestionNum, setReviewingQuestionNum] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -387,6 +389,7 @@ export const App: React.FC = () => {
         onOpenAnswerKeys={() => setIsAnswerKeyOpen(true)}
         onOpenBatchScan={() => setIsBatchScanOpen(true)}
         onOpenTemplateGen={() => setIsTemplateGenOpen(true)}
+        onOpenSavedTemplates={() => setIsSavedTemplatesOpen(true)}
         historyCount={history.length}
       />
 
@@ -729,6 +732,12 @@ export const App: React.FC = () => {
       <TemplateModal
         isOpen={isTemplateGenOpen}
         onClose={() => setIsTemplateGenOpen(false)}
+      />
+
+      {/* Saved Auto Templates Manager Modal */}
+      <SavedTemplatesModal
+        isOpen={isSavedTemplatesOpen}
+        onClose={() => setIsSavedTemplatesOpen(false)}
       />
     </div>
   );

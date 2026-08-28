@@ -8,7 +8,8 @@ import {
   FileText, 
   Layers, 
   Sparkles,
-  Printer
+  Printer,
+  Database
 } from 'lucide-react';
 import { Exam } from '../types';
 
@@ -20,6 +21,7 @@ interface HeaderProps {
   onOpenAnswerKeys: () => void;
   onOpenBatchScan: () => void;
   onOpenTemplateGen: () => void;
+  onOpenSavedTemplates: () => void;
   historyCount: number;
 }
 
@@ -31,6 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAnswerKeys,
   onOpenBatchScan,
   onOpenTemplateGen,
+  onOpenSavedTemplates,
   historyCount,
 }) => {
   return (
@@ -98,6 +101,15 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Printer className="w-3.5 h-3.5 text-emerald-400" />
             <span>Cetak LJK</span>
+          </button>
+
+          {/* Template Tersimpan (Auto Template) */}
+          <button
+            onClick={onOpenSavedTemplates}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 rounded-lg text-xs font-medium transition"
+          >
+            <Database className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Template Tersimpan</span>
           </button>
 
           {/* Riwayat Scan with Counter */}
