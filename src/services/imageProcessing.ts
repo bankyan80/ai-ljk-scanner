@@ -147,7 +147,14 @@ export async function runRealtimeCVScan(
   }
 
   let extractedAnswers: string[] | undefined;
-  let aiVerification: ({ status?: string; studentAnswer?: string } | undefined)[] | undefined;
+  let aiAnswers: Record<string, {
+    rawMark?: string;
+    detectedOptions?: string[];
+    confidence?: number;
+    status?: string;
+    verification?: string;
+    note?: string;
+  }> | undefined;
   const imageStr = typeof imageSource === 'string' ? imageSource : '';
 
   // Only call the AI API when a real image (data URL / base64) is provided.
@@ -172,7 +179,7 @@ export async function runRealtimeCVScan(
     if (!response.ok) throw new Error('Failed to analyze image via AI');
     const aiResult = await response.json();
     extractedAnswers = aiResult.extractedAnswers;
-    aiVerification = aiResult.verificationResults;
+    aiAnswers = aiResult.answers;
   }
 
   // Reconstruct answers from AI result (or fall back to answer keys)
@@ -190,35 +197,78 @@ export async function runRealtimeCVScan(
       });
     }
 
-    // Prefer Gemini's verification status when available; otherwise fall back to local matching.
-    // Gemini may return verificationResults 1-indexed or 0-indexed; handle both defensively.
-    const aiVerified =
-      (aiVerification?.[i] && aiVerification[i].status) ? aiVerification[i] :
-      (aiVerification?.[i - 1] && aiVerification[i - 1].status) ? aiVerification[i - 1] :
-      undefined;
-    let studentAnswer = extractedAnswers?.[i - 1] || (imageStr.startsWith('data:') ? '-' : key);
+    // Rich per-question data from Gemini (object keyed by question number string, 1-indexed).
+    const qData = aiAnswers?.[String(i)];
+    let studentAnswer = extractedAnswers?.[i - 1];
     let status: 'CORRECT' | 'WRONG' | 'EMPTY' | 'MULTIPLE' | 'REVIEW';
+    let confidence = 95;
+    let aiNote = '';
+    let filledOptions: string[] | undefined;
 
-    if (aiVerified) {
-      const v = aiVerified;
-      studentAnswer = (v.status === 'MULTIPLE' ? (v.studentAnswer || studentAnswer) : studentAnswer);
-      status = (v.status as QuestionStatus) || (studentAnswer === key ? 'CORRECT' : studentAnswer === '-' ? 'EMPTY' : 'WRONG');
+    if (qData) {
+      const raw = qData.rawMark || studentAnswer || (qData.detectedOptions?.join('+'));
+      if (typeof qData.confidence === 'number') {
+        confidence = Math.max(0, Math.min(100, Math.round(qData.confidence * 100)));
+      }
+      aiNote = qData.note || '';
+      filledOptions = qData.detectedOptions?.length ? qData.detectedOptions : undefined;
+
+      // 1) Prefer Gemini's explicit verification against the answer key.
+      if (qData.verification) {
+        status = (qData.verification as QuestionStatus) || 'REVIEW';
+        studentAnswer = raw || studentAnswer || '-';
+      } else {
+        // 2) Otherwise derive local status from the detected mark.
+        switch (qData.status) {
+          case 'X_CROSS':
+            studentAnswer = 'X';
+            status = 'WRONG';
+            break;
+          case 'MULTIPLE':
+            studentAnswer = raw || filledOptions?.join(' ') || '?';
+            status = 'MULTIPLE';
+            break;
+          case 'NOT_CLEAR':
+            studentAnswer = raw || studentAnswer || '?';
+            status = 'REVIEW';
+            break;
+          case 'EMPTY':
+            studentAnswer = '-';
+            status = 'EMPTY';
+            break;
+          case 'FILLED':
+          default:
+            studentAnswer = raw || studentAnswer || '-';
+            status = studentAnswer === '-' ? 'EMPTY' : studentAnswer === key ? 'CORRECT' : 'WRONG';
+        }
+      }
     } else {
-      status = studentAnswer === key ? 'CORRECT' : studentAnswer === '-' ? 'EMPTY' : 'WRONG';
+      // Fallback: extractedAnswers / local matching.
+      studentAnswer = studentAnswer || (imageStr.startsWith('data:') ? '-' : key);
+      status = studentAnswer === '-' ? 'EMPTY' : studentAnswer === key ? 'CORRECT' : 'WRONG';
     }
 
+    studentAnswer = studentAnswer || '-';
+
+    const flaggedForReview = status === 'REVIEW' || confidence < 60;
+    const optLetters = (['A', 'B', 'C', 'D', 'E'] as OptionLetter[]).slice(0, exam.optionCount || 5);
     const ansResult: QuestionResult = {
       questionNumber: i,
       studentAnswer,
       correctAnswer: key,
       status,
-      confidence: 95,
-      options: (['A', 'B', 'C', 'D', 'E'] as OptionLetter[]).slice(0, exam.optionCount || 5).map(opt => ({
-        option: opt,
-        density: opt === key ? 90 : 5,
-        isFilled: opt === key,
-      })),
+      confidence,
+      flaggedForReview,
+      options: optLetters.map(opt => {
+        const isFilled = filledOptions ? filledOptions.includes(opt) : opt === key;
+        return {
+          option: opt,
+          density: isFilled ? 90 : 5,
+          isFilled,
+        };
+      }),
     };
+    if (aiNote) (ansResult as QuestionResult & { aiNote?: string }).aiNote = aiNote;
     answers.push(ansResult);
   }
 
