@@ -364,7 +364,7 @@ export const App: React.FC = () => {
     : null;
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-[#0b0f19] text-slate-100' : 'bg-slate-100 text-slate-900'} transition-colors font-sans antialiased selection:bg-cyan-500 selection:text-white`}>
+    <div className={`h-screen overflow-hidden flex flex-col ${darkMode ? 'bg-[#0b0f19] text-slate-100' : 'bg-slate-100 text-slate-900'} transition-colors font-sans antialiased selection:bg-cyan-500 selection:text-white`}>
       {/* Hidden File Input for Image Upload */}
       <input
         id="ljk-file-upload-input"
@@ -387,7 +387,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 lg:px-8 py-5 flex flex-col gap-6">
+      <main className="flex-1 min-h-0 max-w-[1600px] w-full mx-auto px-3 lg:px-6 py-3 flex flex-col gap-3">
         {/* Glowing 4-Step Stepper */}
         <Stepper
           currentStep={currentStep}
@@ -397,9 +397,9 @@ export const App: React.FC = () => {
         />
 
         {/* Top Split Layout: Left Viewer + Right Analysis Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="flex-[2] min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4">
           {/* Left Column: LJK Sheet Interactive Viewport (7 Cols) */}
-          <div className="lg:col-span-7 w-full flex flex-col">
+          <div className="lg:col-span-7 w-full min-h-0 flex flex-col">
             <LJKCanvasViewer
               student={student}
               exam={activeExam}
@@ -416,7 +416,7 @@ export const App: React.FC = () => {
           </div>
 
           {/* Right Column: Realtime Analysis Panel (5 Cols) */}
-          <div className="lg:col-span-5 w-full flex flex-col">
+          <div className="lg:col-span-5 w-full min-h-0 flex flex-col">
             <AnalysisPanel
               progress={analysisProgress}
               isScanning={isScanning}
@@ -428,7 +428,7 @@ export const App: React.FC = () => {
         </div>
 
         {/* Bottom Full-Width Section: HASIL SCAN (Matching Mockup) */}
-        <div className="w-full">
+        <div className="w-full flex-[3] min-h-0">
           <ResultsSection
             metrics={metrics}
             answers={answers}

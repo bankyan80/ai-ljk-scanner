@@ -32,7 +32,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   const percent = progress.percentage || (isScanning ? 56 : 100);
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-4 w-full min-h-0 overflow-y-auto">
       {/* Main Analysis Status Card */}
       <div className="w-full rounded-2xl bg-slate-950/90 border border-slate-800/80 p-5 shadow-xl flex flex-col gap-4">
         {/* Header */}

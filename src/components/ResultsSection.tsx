@@ -73,9 +73,9 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
   const answerColumns = [col1, col2, col3, col4];
 
   return (
-    <div className="w-full rounded-2xl bg-slate-950/90 border border-slate-800/80 p-5 sm:p-7 shadow-2xl flex flex-col gap-6">
+    <div className="w-full h-full min-h-0 rounded-2xl bg-slate-950/90 border border-slate-800/80 p-4 sm:p-5 shadow-2xl flex flex-col gap-4">
       {/* Header & Export Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80 shrink-0">
         <div>
           <h2 className="text-base sm:text-lg font-bold tracking-tight text-white uppercase font-mono flex items-center gap-2">
             HASIL SCAN {hasEssay && <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800/50">OMR + HTR Esai</span>}
@@ -119,25 +119,25 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
       </div>
 
       {/* KPI Cards matching Mockup */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 shrink-0">
         {/* Card 1: Nilai Akhir */}
-        <div className="relative col-span-2 sm:col-span-1 bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 flex flex-col items-center justify-center text-center overflow-hidden shadow-lg">
+        <div className="relative col-span-2 sm:col-span-1 bg-slate-900/90 border border-slate-800/90 rounded-2xl p-3 flex flex-col items-center justify-center text-center overflow-hidden shadow-lg">
           <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none" />
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase font-mono">
+          <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase font-mono">
             {hasEssay ? 'NILAI GABUNGAN' : 'NILAI AKHIR'}
           </span>
-          <div className="relative my-1 flex items-center justify-center">
-            <div className="w-20 h-20 rounded-full border-4 border-emerald-500 flex flex-col items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-              <span className="text-3xl font-extrabold text-white font-mono tracking-tighter">
+          <div className="relative my-0.5 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full border-4 border-emerald-500 flex flex-col items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+              <span className="text-2xl font-extrabold text-white font-mono tracking-tighter">
                 {metrics.score}
               </span>
             </div>
           </div>
-          <span className="text-xs font-bold text-emerald-400 mt-0.5">
+          <span className="text-[11px] font-bold text-emerald-400 mt-0.5">
             {metrics.qualitativeGrade}
           </span>
           {hasEssay && (
-            <div className="flex gap-2 mt-1 text-[10px] text-slate-400 font-mono">
+            <div className="flex gap-2 mt-0.5 text-[9px] text-slate-400 font-mono">
               <span>PG: <strong className="text-cyan-300">{metrics.pgScore ?? metrics.score}</strong></span>
               <span>•</span>
               <span>Esai: <strong className="text-emerald-300">{metrics.essayScore ?? 0}</strong></span>
@@ -146,74 +146,77 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
         </div>
 
         {/* Card 2: Jumlah Soal */}
-        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase font-mono">
+        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-md">
+          <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase font-mono">
             JUMLAH BUTIR
           </span>
-          <div className="my-1.5 p-2 rounded-xl bg-blue-500/10 text-blue-400">
-            <FileSpreadsheet className="w-5 h-5" />
+          <div className="my-0.5 p-1.5 rounded-xl bg-blue-500/10 text-blue-400">
+            <FileSpreadsheet className="w-4 h-4" />
           </div>
-          <span className="text-2xl font-bold text-white font-mono">
+          <span className="text-lg font-bold text-white font-mono">
             {metrics.totalQuestions} {hasEssay ? `+ ${essayAnswers?.length} Esai` : ''}
           </span>
         </div>
 
         {/* Card 3: Jawaban Benar */}
-        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase font-mono">
+        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-md">
+          <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase font-mono">
             JAWABAN BENAR (PG)
           </span>
-          <span className="text-3xl font-extrabold text-emerald-400 font-mono my-1">
+          <span className="text-xl font-extrabold text-emerald-400 font-mono my-0.5">
             {metrics.correct}
           </span>
-          <span className="text-xs font-semibold text-emerald-400/90">
+          <span className="text-[11px] font-semibold text-emerald-400/90">
             {metrics.accuracyPercent}%
           </span>
         </div>
 
         {/* Card 4: Jawaban Salah */}
-        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase font-mono">
+        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-md">
+          <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase font-mono">
             JAWABAN SALAH (PG)
           </span>
-          <span className="text-3xl font-extrabold text-rose-500 font-mono my-1">
+          <span className="text-xl font-extrabold text-rose-500 font-mono my-0.5">
             {metrics.wrong}
           </span>
-          <span className="text-xs font-semibold text-rose-400/90">
+          <span className="text-[11px] font-semibold text-rose-400/90">
             {Math.round((metrics.wrong / (metrics.totalQuestions || 1)) * 100)}%
           </span>
         </div>
 
         {/* Card 5: Jawaban Kosong */}
-        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase font-mono">
+        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-md">
+          <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase font-mono">
             JAWABAN KOSONG
           </span>
-          <span className="text-3xl font-extrabold text-amber-400 font-mono my-1">
+          <span className="text-xl font-extrabold text-amber-400 font-mono my-0.5">
             {metrics.empty}
           </span>
-          <span className="text-xs font-semibold text-amber-400/90">
+          <span className="text-[11px] font-semibold text-amber-400/90">
             {Math.round((metrics.empty / (metrics.totalQuestions || 1)) * 100)}%
           </span>
         </div>
 
         {/* Card 6: Waktu Proses */}
-        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-md">
-          <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase font-mono">
+        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-md">
+          <span className="text-[9px] font-bold tracking-wider text-slate-400 uppercase font-mono">
             WAKTU PROSES
           </span>
-          <span className="text-2xl font-extrabold text-indigo-300 font-mono my-1">
+          <span className="text-lg font-extrabold text-indigo-300 font-mono my-0.5">
             00:0{metrics.processTimeSeconds}
           </span>
-          <span className="text-xs font-semibold text-indigo-400">
+          <span className="text-[11px] font-semibold text-indigo-400">
             {metrics.processTimeSeconds} detik
           </span>
         </div>
       </div>
 
+      {/* Scrollable Detail Area (keeps summary pinned, details scroll internally) */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-4">
+
       {/* Main Mode Tabs (Bagian A: Pilihan Ganda vs Bagian B: Tulisan Tangan) */}
       {hasEssay && (
-        <div className="flex items-center gap-3 border-b border-slate-800/80 pb-2">
+        <div className="shrink-0 flex items-center gap-3 border-b border-slate-800/80 pb-2">
           <button
             onClick={() => setActiveSectionTab('PG')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold font-mono transition ${
@@ -493,8 +496,10 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({
         </div>
       )}
 
+      </div>{/* end scrollable detail area */}
+
       {/* Bottom Scan New Button matching Mockup */}
-      <div className="flex justify-center pt-2">
+      <div className="shrink-0 flex justify-center pt-2">
         <button
           onClick={onScanNew}
           className="flex items-center justify-center gap-2.5 w-full max-w-md py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-sm shadow-xl shadow-indigo-500/25 ring-1 ring-cyan-400/40 transition transform active:scale-98"

@@ -16,7 +16,7 @@ export const Stepper: React.FC<StepperProps> = ({ currentStep, onStepClick }) =>
   ];
 
   return (
-    <div className="w-full py-4 px-2">
+    <div className="w-full py-2 px-2 shrink-0">
       <div className="max-w-4xl mx-auto flex items-center justify-between relative">
         {/* Connecting Background Line */}
         <div className="absolute top-1/2 left-6 right-6 -translate-y-1/2 h-[2px] bg-slate-800 -z-0" />

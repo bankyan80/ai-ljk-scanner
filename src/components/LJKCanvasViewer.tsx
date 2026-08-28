@@ -105,11 +105,11 @@ export const LJKCanvasViewer: React.FC<LJKCanvasViewerProps> = ({
   const totalQuestions = exam.totalQuestions || 50;
 
   return (
-    <div className="flex flex-col gap-3.5 w-full">
+    <div className="flex flex-col gap-3.5 w-full min-h-0">
       {/* Viewer Frame Container */}
       <div 
         ref={containerRef}
-        className="relative w-full rounded-2xl bg-slate-950/90 border border-slate-800/80 p-4 sm:p-6 flex flex-col items-center justify-center overflow-hidden shadow-2xl shadow-cyan-950/30"
+        className="relative w-full min-h-0 rounded-2xl bg-slate-950/90 border border-slate-800/80 p-4 sm:p-6 flex flex-col items-center justify-center overflow-y-auto shadow-2xl shadow-cyan-950/30"
       >
         {/* Futuristic Corner Brackets */}
         <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 border-cyan-400 rounded-tl-lg pointer-events-none" />
