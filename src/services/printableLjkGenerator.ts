@@ -17,166 +17,218 @@ export interface PrintableLjkConfig {
 const PAGE_W = 210;
 const PAGE_H = 297;
 const MARGIN = 10;
+const PAD = 16; // padding kiri/kanan konten (mm)
+const CONTENT_W = PAGE_W - PAD * 2; // 178
+const FOOTER_Y = 283;
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
-// 4 Corner Registration Square Markers (for auto scanner perspective alignment)
+const HDR_H = 7; // tinggi baris header tabel
+const ROW_H = 7.6; // tinggi tiap baris soal
+
+// Registration marks hitam di 4 sudut untuk scanner OMR.
 function drawCornerMarkers(doc: jsPDF) {
-  const markerSize = 6;
+  const size = 6;
   const marker = (x: number, y: number) => {
     doc.setFillColor(15, 23, 42);
-    doc.rect(x, y, markerSize, markerSize, 'F');
+    doc.rect(x, y, size, size, 'F');
     doc.setFillColor(255, 255, 255);
-    doc.rect(x + 1, y + 2.5, markerSize - 2, 1, 'F');
-    doc.rect(x + 2.5, y + 1, 1, markerSize - 2, 'F');
+    doc.rect(x + 1, y + 2.5, size - 2, 1, 'F');
+    doc.rect(x + 2.5, y + 1, 1, size - 2, 'F');
   };
   marker(MARGIN, MARGIN);
-  marker(PAGE_W - MARGIN - markerSize, MARGIN);
-  marker(MARGIN, PAGE_H - MARGIN - markerSize);
-  marker(PAGE_W - MARGIN - markerSize, PAGE_H - MARGIN - markerSize);
+  marker(PAGE_W - MARGIN - size, MARGIN);
+  marker(MARGIN, PAGE_H - MARGIN - size);
+  marker(PAGE_W - MARGIN - size, PAGE_H - MARGIN - size);
 }
 
-// Header (kop) + petunjuk pengisian + form identitas siswa. Returns formY.
-function drawHeaderBlock(doc: jsPDF, config: PrintableLjkConfig): number {
-  // Header Box
-  doc.setDrawColor(15, 23, 42);
-  doc.setLineWidth(0.4);
-  doc.rect(MARGIN + 10, MARGIN + 4, PAGE_W - (MARGIN + 10) * 2, 18);
-
-  doc.setFontSize(13);
+// --- HEADER DOKUMEN: sekolah + judul LJK di kiri, mark sudut di kanan, garis ---
+function drawHeader(doc: jsPDF, config: PrintableLjkConfig) {
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 23, 42);
-  doc.text(config.schoolName.toUpperCase(), PAGE_W / 2, MARGIN + 11, { align: 'center' });
+
+  doc.setFontSize(12);
+  doc.text(config.schoolName.toUpperCase(), PAD, 20);
 
   doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`LEMBAR JAWABAN KOMPUTER (LJK) — ${config.examTitle.toUpperCase()}`, PAGE_W / 2, MARGIN + 18, { align: 'center' });
-
-  // Petunjuk Pengisian
-  const formY = MARGIN + 26;
-  doc.setDrawColor(148, 163, 184);
-  doc.rect(MARGIN + 10, formY, 120, 36);
+  doc.text('LEMBAR JAWABAN KOMPUTER (LJK)', PAD, 26.5);
 
   doc.setFontSize(9);
+  doc.text(`${config.examTitle.toUpperCase()} — TA ${config.academicYear}`, PAD, 32);
+
+  // Corner mark kecil di pojok kanan header
+  doc.setFillColor(15, 23, 42);
+  doc.rect(PAGE_W - PAD - 7, 14, 7, 7, 'F');
+
+  // Garis pemisah header
+  doc.setDrawColor(15, 23, 42);
+  doc.setLineWidth(1);
+  doc.line(PAD, 37, PAGE_W - PAD, 37);
+}
+
+// --- IDENTITAS (kiri) & PETUNJUK PENGISIAN (kanan) berdampingan ---
+function drawInfoBoxes(doc: jsPDF, config: PrintableLjkConfig): number {
+  const top = 42;
+  const lw = 96;
+  const lx = PAD;
+  const rx = lx + lw + 6;
+  const rw = PAGE_W - PAD - rx;
+  const h = 42;
+
+  const labelRight = lx + 37;
+  const lineRight = lx + lw - 6;
+
+  // Kotak identitas (kiri)
+  doc.setDrawColor(148, 163, 184);
+  doc.setLineWidth(0.4);
+  doc.rect(lx, top, lw, h);
+
+  const labels = ['NAMA', 'NO. PESERTA', 'KELAS', 'MATA PELAJARAN', 'TANGGAL'];
   doc.setFont('helvetica', 'bold');
-  doc.text('PETUNJUK PENGISIAN:', MARGIN + 12, formY + 6);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  const tips = [
-    '1. Gunakan pensil 2B untuk menghitamkan bulatan.',
-    '2. Hitamkan penuh salah satu bulatan pilihan jawaban.',
-    '3. Jika ingin mengganti jawaban, hapus sampai bersih.',
-    '4. Jangan melipat atau merobek lembar jawaban ini.',
-  ];
-  tips.forEach((t, i) => dot(doc, MARGIN + 12, formY + 12 + i * 5, t));
-
-  // Form Identitas Siswa (kanan)
-  const idBoxX = MARGIN + 134;
-  doc.rect(idBoxX, formY, PAGE_W - idBoxX - MARGIN - 10, 36);
-
-  const idLabels = [
-    { label: 'NAMA', y: formY + 7 },
-    { label: 'NO. PESERTA', y: formY + 14 },
-    { label: 'KELAS', y: formY + 21 },
-    { label: 'MAPEL', y: formY + 28 },
-    { label: 'TANGGAL', y: formY + 34 },
-  ];
-
   doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'bold');
-  idLabels.forEach((item) => {
-    doc.text(item.label, idBoxX + 3, item.y);
-    doc.text(':', idBoxX + 22, item.y);
-    doc.line(idBoxX + 25, item.y, idBoxX + 50, item.y);
+  doc.setTextColor(51, 65, 85);
+  labels.forEach((lb, i) => {
+    const y = top + 8 + i * 7.1;
+    doc.text(lb, labelRight - 1.5, y, { align: 'right' });
+    doc.text(':', labelRight + 1.5, y);
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.4);
+    doc.line(labelRight + 4, y, lineRight, y);
   });
 
-  return formY;
+  // Kotak petunjuk (kanan)
+  doc.setDrawColor(148, 163, 184);
+  doc.setLineWidth(0.4);
+  doc.rect(rx, top, rw, h);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text('PETUNJUK PENGISIAN:', rx + 8, top + 8);
+
+  const tips = [
+    'Gunakan pensil 2B untuk menghitamkan bulatan.',
+    'Hitamkan penuh salah satu bulatan jawaban.',
+    'Jika mengganti jawaban, hapus sampai bersih.',
+    'Jangan melipat atau merobek lembar jawaban.',
+  ];
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(51, 65, 85);
+  tips.forEach((t, i) => {
+    doc.text('•', rx + 7, top + 16 + i * 7);
+    doc.text(t, rx + 10, top + 16 + i * 7);
+  });
+
+  return top + h;
 }
 
-function dot(doc: jsPDF, x: number, y: number, text: string) {
-  doc.text(text, x, y);
+// Bulatan pilihan jawaban dengan huruf di tengah (sejajar antar baris).
+function drawBubble(doc: jsPDF, cx: number, cy: number, letter: string) {
+  doc.setDrawColor(71, 85, 105);
+  doc.setLineWidth(0.3);
+  doc.circle(cx, cy, 2.3, 'S');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(5.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text(letter, cx, cy + 1, { align: 'center' });
 }
 
-// Grid pilihan ganda. Mengembalikan posisi Y terakhir baris yang digambar.
-function drawMcGrid(
+function range(a: number, b: number): number[] {
+  return Array.from({ length: b - a + 1 }, (_, i) => a + i);
+}
+
+// Satu blok tabel (header + baris soal dengan bulatan).
+function drawTable(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  questions: number[],
+  optCount: number,
+  noW: number,
+  optW: number,
+  options: string[]
+) {
+  // Header
+  doc.setFillColor(241, 245, 249);
+  doc.setDrawColor(15, 23, 42);
+  doc.rect(x, y, noW + optW * optCount, HDR_H, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(15, 23, 42);
+  doc.text('No.', x + noW / 2, y + 5, { align: 'center' });
+  options.forEach((o, oi) =>
+    doc.text(o, x + noW + optW * oi + optW / 2, y + 5, { align: 'center' })
+  );
+  doc.setLineWidth(0.6);
+  doc.line(x, y + HDR_H, x + noW + optW * optCount, y + HDR_H);
+
+  // Baris soal
+  questions.forEach((q, i) => {
+    const ry = y + HDR_H + i * ROW_H;
+    doc.setDrawColor(224, 230, 238);
+    doc.setLineWidth(0.25);
+    doc.rect(x, ry, noW + optW * optCount, ROW_H);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(51, 65, 85);
+    doc.text(`${q}.`, x + 2, ry + ROW_H / 2 + 1);
+
+    options.forEach((o, oi) => {
+      const cx = x + noW + optW * oi + optW / 2;
+      drawBubble(doc, cx, ry + ROW_H / 2, o);
+    });
+  });
+}
+
+// Tabel pilihan ganda dua kolom seimbang (kiri 1..n/2, kanan n/2+1..n) + paginasi.
+function drawAnswerTables(
   doc: jsPDF,
   config: PrintableLjkConfig,
   totalQ: number,
-  optCount: number
+  optCount: number,
+  startY: number
 ): number {
-  const formY = MARGIN + 26;
-  const startY = formY + 42;
+  const tableW = (CONTENT_W - 6) / 2;
+  const noW = 9;
+  const optW = (tableW - noW) / optCount;
   const options = OPTION_LETTERS.slice(0, optCount);
-  const rowH = 7.6;
-  const colCount = totalQ > 60 ? 4 : totalQ > 30 ? 3 : totalQ > 10 ? 2 : 1;
-  const maxRows = Math.max(1, Math.floor((PAGE_H - MARGIN - startY - 8) / rowH));
-  const colWidth = (PAGE_W - (MARGIN + 10) * 2 - (colCount - 1) * 4) / colCount;
+  const maxRows = Math.max(4, Math.floor((FOOTER_Y - startY - 8) / ROW_H));
 
-  let drawn = 0;
-  let lastRowY = startY + 8;
+  let first = 1;
+  let lastY = startY;
   let firstPage = true;
 
-  while (drawn < totalQ) {
-    const remaining = totalQ - drawn;
-    const cols = Math.min(colCount, Math.max(1, Math.ceil(remaining / maxRows)));
-    const perCol = Math.ceil(remaining / cols);
+  while (first <= totalQ) {
+    const last = Math.min(first + maxRows * 2 - 1, totalQ);
+    const count = last - first + 1;
+    const leftCount = Math.ceil(count / 2);
 
     if (!firstPage) {
       doc.addPage();
       drawCornerMarkers(doc);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`${config.examTitle.toUpperCase()} (LANJUTAN)`, PAGE_W / 2, 13, { align: 'center' });
     }
     firstPage = false;
 
-    for (let c = 0; c < cols; c++) {
-      const x = MARGIN + 10 + c * (colWidth + 4);
-      const startQ = drawn + c * perCol + 1;
-      const endQ = Math.min(drawn + (c + 1) * perCol, totalQ);
+    drawTable(doc, PAD, startY, range(first, first + leftCount - 1), optCount, noW, optW, options);
+    drawTable(doc, PAD + tableW + 6, startY, range(first + leftCount, last), optCount, noW, optW, options);
 
-      // Column Header Box
-      doc.setFillColor(241, 245, 249);
-      doc.rect(x, startY, colWidth, 7, 'FD');
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(15, 23, 42);
-      doc.text('No.', x + 2, startY + 5);
-      options.forEach((o, oi) => dot(doc, x + 11 + oi * 5.2, startY + 5, o));
-
-      // Column Rows
-      for (let q = startQ; q <= endQ; q++) {
-        const rIdx = q - startQ;
-        const rowY = startY + 8 + rIdx * rowH;
-
-        doc.setDrawColor(226, 232, 240);
-        doc.rect(x, rowY - 1, colWidth, rowH);
-
-        doc.setFontSize(7.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(51, 65, 85);
-        doc.text(`${q}.`, x + 2, rowY + 4);
-
-        options.forEach((o, oi) => {
-          const bubbleX = x + 11 + oi * 5.2;
-          const bubbleY = rowY + 3;
-          doc.setDrawColor(71, 85, 105);
-          doc.circle(bubbleX, bubbleY, 1.8, 'S');
-          doc.setFontSize(5.5);
-          doc.setTextColor(100, 116, 139);
-          doc.text(o, bubbleX, bubbleY + 0.8, { align: 'center' });
-        });
-
-        lastRowY = rowY;
-      }
-    }
-
-    drawn += cols * perCol;
+    lastY = startY + maxRows * ROW_H;
+    first = last + 1;
   }
 
-  return lastRowY + rowH;
+  return lastY;
 }
 
 // Area jawaban essay (baris garis tulis). Paginasi otomatis bila penuh.
 function drawEssayArea(doc: jsPDF, config: PrintableLjkConfig, startY: number, linesPerBox: number): number {
   const count = Math.max(1, config.essayCount ?? 5);
-  const boxH = 9 + linesPerBox * 3.4;
+  const lineSpacing = 3.2;
+  const boxH = 9 + linesPerBox * lineSpacing;
   let y = startY + 3;
 
   doc.setFont('helvetica', 'bold');
@@ -203,7 +255,7 @@ function drawEssayArea(doc: jsPDF, config: PrintableLjkConfig, startY: number, l
 
     doc.setDrawColor(203, 213, 225);
     for (let k = 1; k <= linesPerBox; k++) {
-      doc.line(MARGIN + 12, y + 8 + k * 3.4, PAGE_W - MARGIN - 12, y + 8 + k * 3.4);
+      doc.line(MARGIN + 12, y + 8 + k * lineSpacing, PAGE_W - MARGIN - 12, y + 8 + k * lineSpacing);
     }
 
     y += boxH + 3;
@@ -212,34 +264,42 @@ function drawEssayArea(doc: jsPDF, config: PrintableLjkConfig, startY: number, l
   return y;
 }
 
+// Footer tiap halaman: garis + teks tengah.
 function drawFooter(doc: jsPDF, config: PrintableLjkConfig) {
-  const text = `AI LJK SCANNER — ${config.subject} • Tahun Ajaran ${config.academicYear}`;
+  const text = `AI LJK SCANNER — ${config.subject} • TAHUN AJARAN ${config.academicYear}`;
   for (let p = 1; p <= doc.getNumberOfPages(); p++) {
     doc.setPage(p);
-    doc.setFontSize(6.5);
+    doc.setDrawColor(148, 163, 184);
+    doc.setLineWidth(0.5);
+    doc.line(PAD, FOOTER_Y, PAGE_W - PAD, FOOTER_Y);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(148, 163, 184);
-    doc.text(text, PAGE_W / 2, PAGE_H - 6, { align: 'center' });
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text(text, PAGE_W / 2, FOOTER_Y + 6, { align: 'center' });
   }
 }
 
 // LJK Pilihan Ganda (dengan/bebas essay menyatu di lembar sama).
 export function generatePrintableLjkPDF(config: PrintableLjkConfig) {
-  const totalQ = Math.max(
-    1,
-    config.totalQuestions ?? config.template?.totalQuestions ?? 50
-  );
+  const totalQ = Math.max(1, config.totalQuestions ?? config.template?.totalQuestions ?? 50);
   const optCount = config.optionCount ?? config.template?.optionCount ?? 5;
   const includeEssay = config.includeEssay ?? (config.template?.hasEssaySection ? 'combined' : 'none');
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawCornerMarkers(doc);
-  drawHeaderBlock(doc, config);
+  drawHeader(doc, config);
 
-  const gridEnd = drawMcGrid(doc, config, totalQ, optCount);
+  const boxesBottom = drawInfoBoxes(doc, config);
+  const tablesEnd = drawAnswerTables(doc, config, totalQ, optCount, boxesBottom + 8);
 
   if (includeEssay === 'combined') {
-    drawEssayArea(doc, config, gridEnd, 4);
+    let essayY = tablesEnd + 6;
+    if (doc.getNumberOfPages() > 1 || essayY > PAGE_H - 20) {
+      doc.addPage();
+      drawCornerMarkers(doc);
+      essayY = MARGIN + 16;
+    }
+    drawEssayArea(doc, config, essayY, 4);
   }
 
   drawFooter(doc, config);
@@ -254,10 +314,10 @@ export function generatePrintableLjkPDF(config: PrintableLjkConfig) {
 export function generateEssayLjkPDF(config: PrintableLjkConfig) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   drawCornerMarkers(doc);
-  drawHeaderBlock(doc, config);
+  drawHeader(doc, config);
 
-  const formY = MARGIN + 26;
-  drawEssayArea(doc, config, formY + 12, 8);
+  const boxesBottom = drawInfoBoxes(doc, config);
+  drawEssayArea(doc, config, boxesBottom + 8, 8);
 
   drawFooter(doc, config);
 
