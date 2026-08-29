@@ -9,7 +9,8 @@ import {
   Layers, 
   Sparkles,
   Printer,
-  Database
+  Database,
+  Download
 } from 'lucide-react';
 import { Exam } from '../types';
 
@@ -22,6 +23,7 @@ interface HeaderProps {
   onOpenBatchScan: () => void;
   onOpenTemplateGen: () => void;
   onOpenSavedTemplates: () => void;
+  onOpenTemplateDownload: () => void;
   historyCount: number;
 }
 
@@ -34,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenBatchScan,
   onOpenTemplateGen,
   onOpenSavedTemplates,
+  onOpenTemplateDownload,
   historyCount,
 }) => {
   return (
@@ -101,6 +104,15 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Printer className="w-3.5 h-3.5 text-emerald-400" />
             <span>Cetak LJK</span>
+          </button>
+
+          {/* Download Template LJK (custom jumlah & pola) */}
+          <button
+            onClick={onOpenTemplateDownload}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-900/40 hover:bg-emerald-800/50 text-emerald-300 border border-emerald-700/50 rounded-lg text-xs font-semibold transition"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download Template</span>
           </button>
 
           {/* Template Tersimpan (Auto Template) */}

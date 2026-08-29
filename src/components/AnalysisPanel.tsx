@@ -23,9 +23,10 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   exam,
   onTriggerRescan,
 }) => {
-  const currentQ = progress.currentQuestionIndex || (isScanning ? 28 : exam.totalQuestions);
+  const currentQ = progress.currentQuestionIndex || 1;
   const totalQ = exam.totalQuestions || 50;
-  const percent = progress.percentage || (isScanning ? 56 : 100);
+  const percent = progress.percentage || 0;
+  const hasCompleted = !isScanning && percent > 0;
 
   return (
     <div className="flex flex-col gap-4 w-full min-h-0 overflow-y-auto">
@@ -111,7 +112,11 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-cyan-200">Menganalisis Jawaban</span>
                 <span className="text-[10px] text-cyan-400 font-mono">
-                  {isScanning ? `Memeriksa soal ${currentQ} / ${totalQ}` : `Pemeriksaan ${totalQ} Soal Selesai`}
+                  {isScanning
+                    ? `Memeriksa soal ${currentQ} / ${totalQ}`
+                    : hasCompleted
+                      ? `Pemeriksaan ${totalQ} Soal Selesai`
+                      : `Menunggu pemindaian · 0 / ${totalQ}`}
                 </span>
               </div>
             </div>
@@ -119,10 +124,12 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               <span className="text-[11px] font-bold font-mono text-cyan-300 animate-pulse">
                 {percent}%
               </span>
-            ) : (
+            ) : hasCompleted ? (
               <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-400">
                 <Check className="w-3.5 h-3.5" /> 100%
               </span>
+            ) : (
+              <span className="text-[11px] font-bold font-mono text-slate-500">0%</span>
             )}
           </div>
         </div>

@@ -13,6 +13,7 @@ import { BatchScanModal } from './components/BatchScanModal';
 import { TemplateModal } from './components/TemplateModal';
 import { SavedTemplatesModal } from './components/SavedTemplatesModal';
 import { SourcePickerModal } from './components/SourcePickerModal';
+import { TemplateDownloadModal } from './components/TemplateDownloadModal';
 import { Camera, FileText, FileSpreadsheet, X, AlertTriangle } from 'lucide-react';
 
 import { 
@@ -41,35 +42,41 @@ import { exportSingleResultToExcel, exportSingleResultToPDF } from './services/e
 export const App: React.FC = () => {
   // Global States
   const [darkMode, setDarkMode] = useState<boolean>(true);
-  const [currentStep, setCurrentStep] = useState<ScanStep>(3);
+  const [currentStep, setCurrentStep] = useState<ScanStep>(1);
   const [exams, setExams] = useState<Exam[]>(PRESET_EXAMS);
   const [activeExam, setActiveExam] = useState<Exam>(PRESET_EXAMS[0]);
-  const [student, setStudent] = useState<StudentInfo>(SAMPLE_STUDENT_ANDI);
+  const [student, setStudent] = useState<StudentInfo>({ name: '', nisn: '', className: '', subject: '' });
 
   // Question & Scoring States
-  const [answers, setAnswers] = useState<QuestionResult[]>(() =>
-    getMockupQuestionAnswers(PRESET_EXAMS[0].answerKeys)
-  );
+  const [answers, setAnswers] = useState<QuestionResult[]>([]);
   const [essayAnswers, setEssayAnswers] = useState<EssayQuestionResult[] | undefined>(undefined);
 
-  const [metrics, setMetrics] = useState<ScanMetrics>(() =>
-    calculateScanMetrics(getMockupQuestionAnswers(PRESET_EXAMS[0].answerKeys), PRESET_EXAMS[0], 8)
-  );
+  const [metrics, setMetrics] = useState<ScanMetrics>(() => ({
+    totalQuestions: PRESET_EXAMS[0].totalQuestions,
+    correct: 0,
+    wrong: 0,
+    empty: 0,
+    multiple: 0,
+    score: 0,
+    accuracyPercent: 0,
+    qualitativeGrade: 'Perlu Remedial',
+    processTimeSeconds: 0,
+    averageConfidence: 0,
+  }));
 
   // Live Scanner & Progress States
   const [isScanning, setIsScanning] = useState<boolean>(false);
-  const [activeScanningQIndex, setActiveScanningQIndex] = useState<number>(27); // Index 27 = Soal 28 matching mockup
-  const [laserYPercent, setLaserYPercent] = useState<number>(56);
+  const [activeScanningQIndex, setActiveScanningQIndex] = useState<number>(-1);
+  const [laserYPercent, setLaserYPercent] = useState<number>(0);
   const [customImage, setCustomImage] = useState<string | null>(null);
 
   const [analysisProgress, setAnalysisProgress] = useState<AnalysisProgress>({
-    currentStage: 'ANALYZING_ANSWERS',
-    currentQuestionIndex: 28,
-    totalQuestions: 50,
-    percentage: 56,
-    laserYPercent: 56,
-    subStatus: 'Menganalisis tingkat kehitaman dan pola arsiran...',
-    detectedStudent: SAMPLE_STUDENT_ANDI,
+    currentStage: 'DETECTING_SHEET',
+    currentQuestionIndex: 0,
+    totalQuestions: PRESET_EXAMS[0].totalQuestions,
+    percentage: 0,
+    laserYPercent: 0,
+    subStatus: 'Menunggu pemindaian baru...',
   });
 
   // Modals & Overlays
@@ -81,6 +88,7 @@ export const App: React.FC = () => {
   const [isBatchScanOpen, setIsBatchScanOpen] = useState(false);
   const [isTemplateGenOpen, setIsTemplateGenOpen] = useState(false);
   const [isSavedTemplatesOpen, setIsSavedTemplatesOpen] = useState(false);
+  const [isTemplateDownloadOpen, setIsTemplateDownloadOpen] = useState(false);
   const [reviewingQuestionNum, setReviewingQuestionNum] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -391,6 +399,7 @@ export const App: React.FC = () => {
         onOpenBatchScan={() => setIsBatchScanOpen(true)}
         onOpenTemplateGen={() => setIsTemplateGenOpen(true)}
         onOpenSavedTemplates={() => setIsSavedTemplatesOpen(true)}
+        onOpenTemplateDownload={() => setIsTemplateDownloadOpen(true)}
         historyCount={history.length}
       />
 
@@ -741,6 +750,12 @@ export const App: React.FC = () => {
       <SavedTemplatesModal
         isOpen={isSavedTemplatesOpen}
         onClose={() => setIsSavedTemplatesOpen(false)}
+      />
+
+      {/* Download Custom LJK Template Modal */}
+      <TemplateDownloadModal
+        isOpen={isTemplateDownloadOpen}
+        onClose={() => setIsTemplateDownloadOpen(false)}
       />
     </div>
   );
